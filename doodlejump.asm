@@ -3,6 +3,7 @@
 	skyColor:		.word 0xe8fafa	# light blue
 	charColor:		.word 0xd9a121	# orange
 	platformColor:  .word 0x875703	# brown
+	gameOverColor:  .word 0xff0000  # red
 
 .text
 	#############################
@@ -23,6 +24,7 @@ INIT:
 	add  $s6, $s6, $s0					# add base dp addr
 	
 	# draw entire board with skyBGColor
+	lw  $a0, skyColor
 	jal paintBoard
 
 	# === Reserved Saved Temporaries  ===
@@ -40,7 +42,8 @@ INIT:
 							
 	main_game_loop:
 		# check for game over
-		
+		addi $t0, $s0, 4096
+		bge  $s1, $t0, gameOver
 	
 		lw  $a1, charColor				# set character color
 		# draw char at current character position ($s1)
@@ -155,12 +158,11 @@ INIT:
 		sw $a1,  8($a0)					# draw dot two pixels right at $a0
 		jr $ra							# return
 		
-	# re-paint the entire board to bg color
+	# re-paint the entire board to color stored in $a0
 	paintBoard:
-		lw $t0, skyColor
 		addi $t2, $s0, 16384			# finish condition of loop, size of board
 		draw_bg_loop:
-			sw $t0, 0($s0)					# paint $t8 (sky color) to current dp addr
+			sw $a0, 0($s0)					# paint $t8 (sky color) to current dp addr
 			addi $s0, $s0, 4				# add 4 to current dp addr
 			beq $s0, $t2, end_draw_bg		# curr dp addr == size of board, end loop
 			j draw_bg_loop					# loop again
@@ -178,6 +180,12 @@ INIT:
 		mul $t0, $a0, 4					# multiply the random int by 4, new range: [8, 116]
 		add $v0, $t0, $zero				# save the prev result to $v0
 		jr $ra							# return
+		
+	gameOver:
+		lw $a0, gameOverColor
+		jal paintBoard
+		j Exit
+		
 		
 Exit:
 	li $v0, 10
