@@ -8,7 +8,7 @@
 	#############################
 	##       GAME SETUP        ## 
 	#############################
-	
+INIT:	
 	lw	 $s0, displayAddr				# $s0 stores the base addr for display
 	addi $s1, $s0, 3388					# set initial character position
 	li 	 $s2, 1							# move flag; 1: moving up, 0: moving down
@@ -39,6 +39,9 @@
 	#############################
 							
 	main_game_loop:
+		# check for game over
+		
+	
 		lw  $a1, charColor				# set character color
 		# draw char at current character position ($s1)
 		add $a0, $s1, $zero
@@ -77,14 +80,25 @@
 			j finish_up_move			# finish and clean up move up
 		move_down:
 			addi $s1, $s1, 128			# move char pos down 1 row
-			j finish_down_move			# finish and clean up move down
+			addi $t0, $s1, 384			# save the address of the pixel 3 rows beneath curr char pos
+			lw   $t0, 0($t0)			# save the color of the pixel calculated from above
+			lw   $t1, platformColor		# save platform color HEX into $t1
+			beq  $t0, $t1, change_to_up_direction  # handle colliding with a platform
+			# similarly check for one pixel left
+			addi $t0, $s1, 380			
+			lw   $t0, 0($t0)			
+			lw   $t1, platformColor		
+			beq  $t0, $t1, change_to_up_direction
+			# similarly check for one pixel right
+			addi $t0, $s1, 388			
+			lw   $t0, 0($t0)			
+			lw   $t1, platformColor		
+			beq  $t0, $t1, change_to_up_direction
+			
+			j listen_for_input			# no platform below, continue
 		finish_up_move:
 			addi $s3, $s3, 1			# increment move counter by 1
 			beq $s3, 11, change_to_down_direction	# if move counter == 8, change direction to down
-			j listen_for_input			# listen_for_input is the next step after updaing char's y position
-		finish_down_move:
-			addi $s3, $s3, 1			# increment move counter by 1
-			beq $s3, 11, change_to_up_direction		# if move counter == 8, change direction to up
 			j listen_for_input			# listen_for_input is the next step after updaing char's y position
 		change_to_down_direction:
 			li $s3, 0					# reset move counter
