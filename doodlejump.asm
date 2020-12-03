@@ -22,6 +22,9 @@ INIT:
 	jal generatePlatformX				# generate random x val for highest platform
 	addi $s6, $v0, 1408					# set initial middle platform location (y = 11, x = rand)
 	add  $s6, $s6, $s0					# add base dp addr
+	jal generatePlatformX				# generate random x val for highest platform
+	addi $s7, $v0, 256					# set initial middle platform location (y = 2, x = rand)
+	add  $s7, $s7, $s0					# add base dp addr
 	
 	# draw entire board with skyBGColor
 	lw  $a0, skyColor
@@ -32,9 +35,10 @@ INIT:
 	# s1 (current char location, denotes the very top pixel of char)
 	# s2 (move flag)
 	# s3 (move step count)
-	# s4 (lowest  platform (lp) location, denotes the center pixel of the 5 pixel platform)
-	# s5 (middle  platform (mp) location)
-	# s6 (highest platform (hp) location)
+	# s4 (lowest  platform (p0) location, denotes the center pixel of the 5 pixel platform)
+	# s5 (lower  platform  (p1) location)
+	# s6 (higher platform  (p2) location)
+	# s7 (highest platform (p2) location)
 	
 	#############################
 	##     MAIN GAME LOOP      ## 
@@ -54,11 +58,14 @@ INIT:
 		# draw lowest platform at current lp ($s4)
 		add $a0, $s4, $zero
 		jal drawPlatform
-		# draw middle platform at current mp ($s5)
+		# draw lower platform at current mp ($s5)
 		add $a0, $s5, $zero
 		jal drawPlatform
-		# draw highest platform at current hp ($s6)
+		# draw higher platform at current hp ($s6)
 		add $a0, $s6, $zero
+		jal drawPlatform
+		# draw highest platform at current hp ($s6)
+		add $a0, $s7, $zero
 		jal drawPlatform
 	
 		addi $t9, $zero, 128			# load 128 (board width) into $t9
@@ -76,12 +83,37 @@ INIT:
 		jal drawCharacter				# erase current char pos drawing
 		
 		# update char's y position
-		beq $s2, 1, move_up				# if move flag is 1, move up
-		beq $s2, 0, move_down			# if move flag is 0, move down
-		move_up:
+		beq $s2, 1, move_up_char		# if move flag is 1, move up
+		beq $s2, 0, move_down_char		# if move flag is 0, move down
+		
+		move_up_char:
+			addi $t0, $s0, 1664			# load $t0 with approximately x = 0, y = 13
+			ble  $s1, $t0, move_down_platforms	# if char pos.y <= 13, move down plats instead of char
+			
 			addi $s1, $s1, -128			# move char pos up 1 row
 			j finish_up_move			# finish and clean up move up
-		move_down:
+			
+		move_down_platforms:
+			# erase all current platforms
+			lw   $a1, skyColor			# load $a1 with bg color
+			addi $a0, $s4, 0			# load $a0 with p1 position
+			jal drawPlatform			# draw p1 with bg color, i.e., erase
+			addi $a0, $s5, 0			# load $a0 with p2 position
+			jal drawPlatform			# draw p1 with bg color, i.e., erase
+			addi $a0, $s6, 0			# load $a0 with p3 position
+			jal drawPlatform			# draw p1 with bg color, i.e., erase
+			addi $a0, $s7, 0			# load $a0 with p4 position
+			jal drawPlatform			# draw p1 with bg color, i.e., erase
+			
+			# move all platform positions down by 1 row
+			addi $s4, $s4, 128
+			addi $s5, $s5, 128
+			addi $s6, $s6, 128
+			addi $s7, $s7, 128
+			
+			j finish_up_move			# finish and clean up move up
+			
+		move_down_char:
 			addi $s1, $s1, 128			# move char pos down 1 row
 			addi $t0, $s1, 384			# save the address of the pixel 3 rows beneath curr char pos
 			lw   $t0, 0($t0)			# save the color of the pixel calculated from above
@@ -99,14 +131,17 @@ INIT:
 			beq  $t0, $t1, change_to_up_direction
 			
 			j listen_for_input			# no platform below, continue
+			
 		finish_up_move:
 			addi $s3, $s3, 1			# increment move counter by 1
 			beq $s3, 11, change_to_down_direction	# if move counter == 8, change direction to down
 			j listen_for_input			# listen_for_input is the next step after updaing char's y position
+			
 		change_to_down_direction:
 			li $s3, 0					# reset move counter
 			li $s2, 0					# set move flag to 0 (down)
 			j listen_for_input			# listen_for_input is the next step after updaing char's y position
+			
 		change_to_up_direction:
 			li $s3, 0					# reset move counter
 			li $s2, 1					# set move flag to 1 (up)
@@ -185,7 +220,6 @@ INIT:
 		lw $a0, gameOverColor
 		jal paintBoard
 		j Exit
-		
 		
 Exit:
 	li $v0, 10
