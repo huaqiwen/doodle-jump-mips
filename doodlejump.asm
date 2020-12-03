@@ -48,7 +48,19 @@ INIT:
 		# check for game over
 		addi $t0, $s0, 4096
 		bge  $s1, $t0, gameOver
-	
+		
+		# check if lowest platform (p0) is out of screen
+		ble $s4, $t0, lowest_plat_not_out
+		add $s4, $s5, $zero				# move value from p1 to p0
+		add $s5, $s6, $zero				# move value from p2 to p1
+		add $s6, $s7, $zero				# move value from p3 to p2
+		# generate new position for the highest platform (p3)
+		jal generatePlatformX			# generate random x val for p3
+		addi $s7, $v0, -640				# move p3.y up by 5 rows, out of screen for now
+		add  $s7, $s7, $s0				# add base dp addr
+		
+		lowest_plat_not_out:			# placeholder label if the condition above fails
+		
 		lw  $a1, charColor				# set character color
 		# draw char at current character position ($s1)
 		add $a0, $s1, $zero
