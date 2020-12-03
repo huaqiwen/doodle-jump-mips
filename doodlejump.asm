@@ -68,16 +68,16 @@ INIT:
 		jal drawCharacter
 		
 		lw  $a1, platformColor			# set platform color
-		# draw lowest platform at current lp ($s4)
+		# draw lowest platform at current p0 ($s4)
 		add $a0, $s4, $zero
 		jal drawPlatform
-		# draw lower platform at current mp ($s5)
+		# draw lower platform at current p1 ($s5)
 		add $a0, $s5, $zero
 		jal drawPlatform
-		# draw higher platform at current hp ($s6)
+		# draw higher platform at current p2 ($s6)
 		add $a0, $s6, $zero
 		jal drawPlatform
-		# draw highest platform at current hp ($s6)
+		# draw highest platform at current p3 ($s6)
 		add $a0, $s7, $zero
 		jal drawPlatform
 	
@@ -231,6 +231,7 @@ INIT:
 		add $v0, $t0, $zero				# save the prev result to $v0
 		jr $ra							# return
 		
+	# game over handling: render game over screen & listen for retry (press SPACE)
 	gameOver:
 		lw $a0, skyColor				# set a0 to be the background color
 		jal paintBoard					# clear the board (erase platforms)
@@ -240,6 +241,14 @@ INIT:
 		jal printLetterG
 		addi $a0, $s0, 1360				# set the position for the exclamation mark
 		jal printExclamationMark
+		
+		# press SPACE to restart game
+		listen_for_retry:
+			lw $t8, 0xffff0000				# read if input exists
+			bne $t8, 1, listen_for_retry	# input DNE => listen again
+			lw $t8, 0xffff0004				# read input char
+			beq $t8, 0x20, INIT				# input char is SPACE, jump to INIT
+			j listen_for_retry				# input is not SPACE, loop again
 		
 		j Exit
 		
@@ -265,6 +274,7 @@ INIT:
 		sw $t0, 0($a0)
 		sw $t0, 128($a0)
 		sw $t0, 384($a0)
+		jr $ra
 		
 Exit:
 	li $v0, 10
