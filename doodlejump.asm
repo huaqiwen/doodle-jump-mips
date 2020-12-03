@@ -1,9 +1,10 @@
 .data
 	displayAddr:	.word 0x10008000
-	skyColor:		.word 0xe8fafa	# light blue
+	skyColor:		.word 0xfcfcde	# light yellow
 	charColor:		.word 0xd9a121	# orange
-	platformColor:  .word 0x875703	# brown
+	platformColor:  .word 0x2f912f	# dark green
 	gameOverColor:  .word 0xff0000  # red
+	ggColor:		.word 0x2800d9	# dark blue
 
 .text
 	#############################
@@ -231,9 +232,32 @@ INIT:
 		jr $ra							# return
 		
 	gameOver:
-		lw $a0, gameOverColor
-		jal paintBoard
+		addi $a1, $s0, 1324
+		jal printLetterG
+		
+		li $v0, 32
+		li $a0, 300
+		syscall
+		
+		addi $a1, $s0, 1348
+		jal printLetterG
 		j Exit
+		
+	# prints the letter G where top left corner is at $a1
+	printLetterG:
+		li $t0, 0x2800d9
+		sw $t0, 0($a1)
+		sw $t0, 4($a1)
+		sw $t0, 8($a1)
+		sw $t0, 12($a1)
+		sw $t0, 128($a1)
+		sw $t0, 256($a1)
+		sw $t0, 268($a1)
+		sw $t0, 384($a1)
+		sw $t0, 388($a1)
+		sw $t0, 392($a1)
+		sw $t0, 396($a1)
+		jr $ra
 		
 Exit:
 	li $v0, 10
