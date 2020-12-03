@@ -238,7 +238,7 @@ INIT:
 		jal printLetterG
 		addi $a0, $s0, 1340				# set the position for the 2nd G
 		jal printLetterG
-		addi $a0, $s0, 1360
+		addi $a0, $s0, 1360				# set the position for the exclamation mark
 		jal printExclamationMark
 		
 		j Exit
