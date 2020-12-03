@@ -232,32 +232,39 @@ INIT:
 		jr $ra							# return
 		
 	gameOver:
-		addi $a1, $s0, 1324
+		lw $a0, skyColor				# set a0 to be the background color
+		jal paintBoard					# clear the board (erase platforms)
+		addi $a0, $s0, 1320				# set the position for the 1st G
 		jal printLetterG
-		
-		li $v0, 32
-		li $a0, 300
-		syscall
-		
-		addi $a1, $s0, 1348
+		addi $a0, $s0, 1340				# set the position for the 2nd G
 		jal printLetterG
+		addi $a0, $s0, 1360
+		jal printExclamationMark
+		
 		j Exit
 		
-	# prints the letter G where top left corner is at $a1
+	# prints the letter G where top left corner is at $a0
 	printLetterG:
-		li $t0, 0x2800d9
-		sw $t0, 0($a1)
-		sw $t0, 4($a1)
-		sw $t0, 8($a1)
-		sw $t0, 12($a1)
-		sw $t0, 128($a1)
-		sw $t0, 256($a1)
-		sw $t0, 268($a1)
-		sw $t0, 384($a1)
-		sw $t0, 388($a1)
-		sw $t0, 392($a1)
-		sw $t0, 396($a1)
+		lw $t0, ggColor
+		sw $t0, 0($a0)
+		sw $t0, 4($a0)
+		sw $t0, 8($a0)
+		sw $t0, 12($a0)
+		sw $t0, 128($a0)
+		sw $t0, 256($a0)
+		sw $t0, 268($a0)
+		sw $t0, 384($a0)
+		sw $t0, 388($a0)
+		sw $t0, 392($a0)
+		sw $t0, 396($a0)
 		jr $ra
+		
+	# prints ! where top pixel is at $a0
+	printExclamationMark:
+		lw $t0, ggColor
+		sw $t0, 0($a0)
+		sw $t0, 128($a0)
+		sw $t0, 384($a0)
 		
 Exit:
 	li $v0, 10
