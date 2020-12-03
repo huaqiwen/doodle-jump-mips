@@ -158,15 +158,15 @@ INIT:
 	
 	# move Doodler left after j is pressed
 	j_on_press:
-		addi $t9, $t9, -4
-		beq $t9, $zero, main_game_loop	# $t9 == 0, on the left edge, loop again
-		addi $s1, $s1, -4				# move dp addr left by one pixel (4)
+		# addi $t9, $t9, -8
+		# beq $t9, $zero, main_game_loop	# $t9 == 0, on the left edge, loop again
+		addi $s1, $s1, -8				# move dp addr left by one pixel (4)
 		j main_game_loop				# loop game again
 	# move Doodler right after k is pressed
 	k_on_press:
-		addi $t9, $t9, -120				# $t9 -= 124, used in the following line to check $t9 == 124
-		beq $t9, $zero, main_game_loop	# $t9 == 0, on the right edge, loop again
-		addi $s1, $s1, 4				# move dp addr right by one pixel (4)
+		# addi $t9, $t9, -120				# $t9 -= 116, used in the following line to check $t9 == 124
+		# beq $t9, $zero, main_game_loop	# $t9 == 0, on the right edge, loop again
+		addi $s1, $s1, 8				# move dp addr right by one pixel (4)
 		j main_game_loop				# loop game again
 		
 	j Exit								# exit the program so the functions below don't run unexpectedly
@@ -186,11 +186,13 @@ INIT:
 		
 	# draw the platform at $a0 with color at $a1
 	drawPlatform:
-		sw $a1, -8($a0)					# draw dot two pixels left at $a0
-		sw $a1, -4($a0)					# draw dot one pixels left at $a0
-		sw $a1,  0($a0)					# draw dot at $a0
-		sw $a1,  4($a0)					# draw dot one pixels right at $a0
-		sw $a1,  8($a0)					# draw dot two pixels right at $a0
+		sw $a1, -12($a0)					# draw dot 3 pixels left at $a0
+		sw $a1,  -8($a0)					# draw dot 2 pixels left at $a0
+		sw $a1,  -4($a0)					# draw dot 1 pixels left at $a0
+		sw $a1,   0($a0)					# draw dot at $a0
+		sw $a1,   4($a0)					# draw dot 1 pixels right at $a0
+		sw $a1,   8($a0)					# draw dot 2 pixels right at $a0
+		sw $a1,  12($a0)					# draw dot 3 pixels right at $a0
 		jr $ra							# return
 		
 	# re-paint the entire board to color stored in $a0
@@ -209,9 +211,9 @@ INIT:
 	generatePlatformX:
 		li $v0, 42						# service 42 for random int within range
 		li $a0, 0						# ID of the RNG
-		li $a1, 28						# range of RNG: [0, 27]
+		li $a1, 26						# range of RNG: [0, 25]
 		syscall
-		addi $a0, $a0, 2				# add random int by 2 (center of a block, new range: [2, 29])
+		addi $a0, $a0, 3				# add random int by 3 (center of a block, new range: [3, 28])
 		mul $t0, $a0, 4					# multiply the random int by 4, new range: [8, 116]
 		add $v0, $t0, $zero				# save the prev result to $v0
 		jr $ra							# return
