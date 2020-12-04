@@ -5,6 +5,7 @@
 	platformColor:  .word 0x2f912f	# dark green
 	gameOverColor:  .word 0xff0000  # red
 	ggColor:		.word 0x2800d9	# dark blue
+	score: 			.word 0x0		# game score counter 
 
 .text
 	#############################
@@ -27,6 +28,9 @@ INIT:
 	addi $s7, $v0, 256					# set initial middle platform location (y = 2, x = rand)
 	add  $s7, $s7, $s0					# add base dp addr
 	
+	li $t0, 0							# store 0 into $t0
+	sw $t0, score						# store 0 into score memory
+	
 	# draw entire board with skyBGColor
 	lw  $a0, skyColor
 	jal paintBoard
@@ -46,6 +50,11 @@ INIT:
 	#############################
 							
 	main_game_loop:
+		# DEBUG
+		lw $a0, score					# load score into $a0
+		li $v0, 1						# service 1, print
+		syscall
+		
 		# check for game over
 		addi $t0, $s0, 4096
 		bge  $s1, $t0, gameOver
@@ -147,15 +156,20 @@ INIT:
 			
 		finish_up_move:
 			addi $s3, $s3, 1			# increment move counter by 1
-			beq $s3, 11, change_to_down_direction	# if move counter == 8, change direction to down
+			beq $s3, 12, change_to_down_direction	# if move counter == 12, change direction to down
 			j listen_for_input			# listen_for_input is the next step after updaing char's y position
 			
-		change_to_down_direction:
+		change_to_down_direction:		# this happens iff char ascended for 12 pixels
 			li $s3, 0					# reset move counter
 			li $s2, 0					# set move flag to 0 (down)
 			j listen_for_input			# listen_for_input is the next step after updaing char's y position
 			
-		change_to_up_direction:
+		change_to_up_direction:			# this happens iff char hit platform
+			addi $t0, $s0, 3072
+			bge $s1, $t0, old_platform_hit
+			jal incrementScore
+			
+			old_platform_hit:
 			li $s3, 0					# reset move counter
 			li $s2, 1					# set move flag to 1 (up)
 			j listen_for_input			# listen_for_input is the next step after updaing char's y position
@@ -171,14 +185,10 @@ INIT:
 	
 	# move Doodler left after j is pressed
 	j_on_press:
-		# addi $t9, $t9, -8
-		# beq $t9, $zero, main_game_loop	# $t9 == 0, on the left edge, loop again
 		addi $s1, $s1, -8				# move dp addr left by one pixel (4)
 		j main_game_loop				# loop game again
 	# move Doodler right after k is pressed
 	k_on_press:
-		# addi $t9, $t9, -120				# $t9 -= 116, used in the following line to check $t9 == 124
-		# beq $t9, $zero, main_game_loop	# $t9 == 0, on the right edge, loop again
 		addi $s1, $s1, 8				# move dp addr right by one pixel (4)
 		j main_game_loop				# loop game again
 		
@@ -229,6 +239,13 @@ INIT:
 		addi $a0, $a0, 3				# add random int by 3 (center of a block, new range: [3, 28])
 		mul $t0, $a0, 4					# multiply the random int by 4, new range: [8, 116]
 		add $v0, $t0, $zero				# save the prev result to $v0
+		jr $ra							# return
+		
+	# increment the score counter by 1
+	incrementScore:
+		lw $t0, score				 	# load current score counter into $t0
+		addi $t0, $t0, 1			 	# increment score
+		sw $t0, score				 	# save incremented score into memory
 		jr $ra							# return
 		
 	# game over handling: render game over screen & listen for retry (press SPACE)
