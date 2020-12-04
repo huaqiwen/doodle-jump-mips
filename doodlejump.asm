@@ -54,6 +54,110 @@ INIT:
 		lw $a0, score					# load score into $a0
 		li $v0, 1						# service 1, print
 		syscall
+
+		lw $t0, score					# load score into $t0
+		li $t1, 10
+		div $t0, $t1					# calculate score / 10
+		mfhi $t0						# store second digit of score's decimal representation into $t0
+		mflo $t1						# store first digit of score's decimal representation into $t1
+		beq $t1, 0, single_digit_score	# if only single digit, jump to single_digit_score
+		
+		addi $a0, $s0, 132				# store left digit position into $a0
+		beq $t1, 1, print_one_left
+		beq $t1, 2, print_two_left
+		beq $t1, 3, print_three_left
+		beq $t1, 4, print_four_left
+		beq $t1, 5, print_five_left
+		beq $t1, 6, print_six_left
+		beq $t1, 7, print_seven_left
+		beq $t1, 8, print_eight_left
+		beq $t1, 9, print_nine_left
+		
+		single_digit_score:
+			addi $a0, $s0, 132				# store score display position into $a0
+		print_right_digit:
+			mfhi $t0						# store second digit of score's decimal representation into $t0
+			beq $t0, 0, print_zero
+			beq $t0, 1, print_one
+			beq $t0, 2, print_two
+			beq $t0, 3, print_three
+			beq $t0, 4, print_four
+			beq $t0, 5, print_five
+			beq $t0, 6, print_six
+			beq $t0, 7, print_seven
+			beq $t0, 8, print_eight
+			beq $t0, 9, print_nine
+		
+		print_zero:
+			jal printZero
+			j finish_printing_score
+		print_one:
+			jal printOne
+			j finish_printing_score
+		print_two:
+			jal printTwo
+			j finish_printing_score
+		print_three:
+			jal printThree
+			j finish_printing_score
+		print_four:
+			jal printFour
+			j finish_printing_score
+		print_five:
+			jal printFive
+			j finish_printing_score
+		print_six:
+			jal printSix
+			j finish_printing_score
+		print_seven:
+			jal printSeven
+			j finish_printing_score
+		print_eight:
+			jal printEight
+			j finish_printing_score
+		print_nine:
+			jal printNine
+			j finish_printing_score
+			
+		# TODO: this is a bad implementation, clean this up later if I have time
+		print_one_left:
+			jal printOne
+			addi $a0, $s0, 148
+			j print_right_digit
+		print_two_left:
+			jal printTwo
+			addi $a0, $s0, 148
+			j print_right_digit
+		print_three_left:
+			jal printThree
+			addi $a0, $s0, 148
+			j print_right_digit
+		print_four_left:
+			jal printFour
+			addi $a0, $s0, 148
+			j print_right_digit
+		print_five_left:
+			jal printFive
+			addi $a0, $s0, 148
+			j print_right_digit
+		print_six_left:
+			jal printSix
+			addi $a0, $s0, 148
+			j print_right_digit
+		print_seven_left:
+			jal printSeven
+			addi $a0, $s0, 148
+			j print_right_digit
+		print_eight_left:
+			jal printEight
+			addi $a0, $s0, 148
+			j print_right_digit
+		print_nine_left:
+			jal printNine
+			addi $a0, $s0, 148
+			j print_right_digit
+		
+		finish_printing_score:
 		
 		# check for game over
 		addi $t0, $s0, 4096
@@ -174,7 +278,9 @@ INIT:
 			li $s2, 1					# set move flag to 1 (up)
 			j listen_for_input			# listen_for_input is the next step after updaing char's y position
 			
-	listen_for_input:	
+	listen_for_input:
+		addi $a0, $s0, 132				# clear the number (2 digit)
+		jal clearNumber
 		# handle keyboard input (j,k)
 		lw $t8, 0xffff0000				# read if input exists
 		bne $t8, 1, main_game_loop		# input DNE => loop again
@@ -292,6 +398,186 @@ INIT:
 		sw $t0, 128($a0)
 		sw $t0, 384($a0)
 		jr $ra
+		
+	printZero:
+		lw $t0, ggColor
+		sw $t0, 0($a0)
+		sw $t0, 4($a0)
+		sw $t0, 8($a0)
+		sw $t0, 128($a0)
+		sw $t0, 136($a0)
+		sw $t0, 256($a0)
+		sw $t0, 264($a0)
+		sw $t0, 384($a0)
+		sw $t0, 392($a0)
+		sw $t0, 512($a0)
+		sw $t0, 516($a0)
+		sw $t0, 520($a0)
+		jr $ra
+		
+	printOne:
+		lw $t0, ggColor
+		sw $t0, 8($a0)
+		sw $t0, 136($a0)
+		sw $t0, 264($a0)
+		sw $t0, 392($a0)
+		sw $t0, 520($a0)
+		jr $ra
+		
+	printTwo:
+		lw $t0, ggColor
+		sw $t0, 0($a0)
+		sw $t0, 4($a0)
+		sw $t0, 8($a0)
+		sw $t0, 136($a0)
+		sw $t0, 256($a0)
+		sw $t0, 260($a0)
+		sw $t0, 264($a0)
+		sw $t0, 384($a0)
+		sw $t0, 512($a0)
+		sw $t0, 516($a0)
+		sw $t0, 520($a0)
+		jr $ra
+
+	printThree:
+		lw $t0, ggColor
+		sw $t0, 0($a0)
+		sw $t0, 4($a0)
+		sw $t0, 8($a0)
+		sw $t0, 136($a0)
+		sw $t0, 256($a0)
+		sw $t0, 260($a0)
+		sw $t0, 264($a0)
+		sw $t0, 392($a0)
+		sw $t0, 512($a0)
+		sw $t0, 516($a0)
+		sw $t0, 520($a0)
+		jr $ra
+		
+	printFour:
+		lw $t0, ggColor
+		sw $t0, 0($a0)
+		sw $t0, 8($a0)
+		sw $t0, 128($a0)
+		sw $t0, 136($a0)
+		sw $t0, 256($a0)
+		sw $t0, 260($a0)
+		sw $t0, 264($a0)
+		sw $t0, 392($a0)
+		sw $t0, 520($a0)
+		jr $ra
+
+	printFive:
+		lw $t0, ggColor
+		sw $t0, 0($a0)
+		sw $t0, 4($a0)
+		sw $t0, 8($a0)
+		sw $t0, 128($a0)
+		sw $t0, 256($a0)
+		sw $t0, 260($a0)
+		sw $t0, 264($a0)
+		sw $t0, 392($a0)
+		sw $t0, 512($a0)
+		sw $t0, 516($a0)
+		sw $t0, 520($a0)
+		jr $ra
+
+	printSix:
+		lw $t0, ggColor
+		sw $t0, 0($a0)
+		sw $t0, 4($a0)
+		sw $t0, 8($a0)
+		sw $t0, 128($a0)
+		sw $t0, 256($a0)
+		sw $t0, 260($a0)
+		sw $t0, 264($a0)
+		sw $t0, 384($a0)
+		sw $t0, 392($a0)
+		sw $t0, 512($a0)
+		sw $t0, 516($a0)
+		sw $t0, 520($a0)
+		jr $ra
+		
+	printSeven:
+		lw $t0, ggColor
+		sw $t0, 0($a0)
+		sw $t0, 4($a0)
+		sw $t0, 8($a0)
+		sw $t0, 136($a0)
+		sw $t0, 264($a0)
+		sw $t0, 392($a0)
+		sw $t0, 520($a0)
+		jr $ra
+
+	printEight:
+		lw $t0, ggColor
+		sw $t0, 0($a0)
+		sw $t0, 4($a0)
+		sw $t0, 8($a0)
+		sw $t0, 128($a0)
+		sw $t0, 136($a0)
+		sw $t0, 256($a0)
+		sw $t0, 260($a0)
+		sw $t0, 264($a0)
+		sw $t0, 384($a0)
+		sw $t0, 392($a0)
+		sw $t0, 512($a0)
+		sw $t0, 516($a0)
+		sw $t0, 520($a0)
+		jr $ra
+
+	printNine:
+		lw $t0, ggColor
+		sw $t0, 0($a0)
+		sw $t0, 4($a0)
+		sw $t0, 8($a0)
+		sw $t0, 128($a0)
+		sw $t0, 136($a0)
+		sw $t0, 256($a0)
+		sw $t0, 260($a0)
+		sw $t0, 264($a0)
+		sw $t0, 392($a0)
+		sw $t0, 512($a0)
+		sw $t0, 516($a0)
+		sw $t0, 520($a0)
+		jr $ra
+	
+	# clear a number (i.e., two 5x3 rectangle) at position $a0	
+	clearNumber:
+		lw $t0, skyColor
+		sw $t0, 0($a0)
+		sw $t0, 4($a0)
+		sw $t0, 8($a0)
+		sw $t0, 128($a0)
+		sw $t0, 132($a0)
+		sw $t0, 136($a0)
+		sw $t0, 256($a0)
+		sw $t0, 260($a0)
+		sw $t0, 264($a0)
+		sw $t0, 384($a0)
+		sw $t0, 388($a0)
+		sw $t0, 392($a0)
+		sw $t0, 512($a0)
+		sw $t0, 516($a0)
+		sw $t0, 520($a0)
+		
+		sw $t0, 16($a0)
+		sw $t0, 20($a0)
+		sw $t0, 24($a0)
+		sw $t0, 144($a0)
+		sw $t0, 148($a0)
+		sw $t0, 152($a0)
+		sw $t0, 272($a0)
+		sw $t0, 276($a0)
+		sw $t0, 280($a0)
+		sw $t0, 400($a0)
+		sw $t0, 404($a0)
+		sw $t0, 408($a0)
+		sw $t0, 528($a0)
+		sw $t0, 532($a0)
+		sw $t0, 536($a0)
+		jr $ra
+		
 		
 Exit:
 	li $v0, 10
