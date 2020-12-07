@@ -50,16 +50,11 @@ INIT:
 	#############################
 							
 	main_game_loop:
-		# DEBUG
-		lw $a0, score					# load score into $a0
-		li $v0, 1						# service 1, print
-		syscall
-
 		lw $t0, score					# load score into $t0
 		li $t1, 10
 		div $t0, $t1					# calculate score / 10
 		mfhi $t0						# store second digit of score's decimal representation into $t0
-		mflo $t1						# store first digit of score's decimal representation into $t1
+		mflo $t1						# store first digit of score's d ecimal representation into $t1
 		beq $t1, 0, single_digit_score	# if only single digit, jump to single_digit_score
 		
 		addi $a0, $s0, 132				# store left digit position into $a0
@@ -269,9 +264,18 @@ INIT:
 			j listen_for_input			# listen_for_input is the next step after updaing char's y position
 			
 		change_to_up_direction:			# this happens iff char hit platform
-			addi $t0, $s0, 3072
-			bge $s1, $t0, old_platform_hit
-			jal incrementScore
+			# play sound effect
+			lw $t0, score				# load score into $t0
+			addi $a0, $t0, 27			# use score + 27 as pitch
+			li $a1, 400					# set sound duration as 0.4 secs
+			li $a2, 3					# piano
+			li $a3, 100					# volume 100/127
+			li $v0, 31					# Service 31 for playing music
+			syscall
+		
+			addi $t0, $s0, 3072			# store the address of the 24th row
+			bge $s1, $t0, old_platform_hit	# if char hits a platform below the 24th row, don't incre score
+			jal incrementScore			# increment score
 			
 			old_platform_hit:
 			li $s3, 0					# reset move counter
