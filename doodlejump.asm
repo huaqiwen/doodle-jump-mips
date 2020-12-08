@@ -1,11 +1,15 @@
 .data
 	displayAddr:	.word 0x10008000
-	skyColor:		.word 0xfcfcde	# light yellow
-	charColor:		.word 0xd9a121	# orange
-	platformColor:  .word 0x2f912f	# dark green
-	gameOverColor:  .word 0xff0000  # red
-	ggColor:		.word 0x2800d9	# dark blue
-	score: 			.word 0x0		# game score counter 
+	skyColor:		.word 0xfcfcde		# light yellow
+	charColor:		.word 0xd9a121		# orange
+	platformColor:  .word 0x2f912f		# dark green
+	gameOverColor:  .word 0xff0000  	# red
+	ggColor:		.word 0x2800d9		# dark blue
+	score: 			.word 0x0			# game score counter 
+	
+	monsterColor: 	.word 0xbf061e  	# dark red
+	monsterLoc:		.word 0x10008000	# monster location
+	monsterCounter: .word 0x0			# randomly generate monster when counter is 0
 
 .text
 	#############################
@@ -50,12 +54,58 @@ INIT:
 	#############################
 							
 	main_game_loop:
+		
+		lw $t0, monsterCounter			# load monsterCounter into $t0
+		lw $t1, monsterLoc				# load monsterLoc into $t1
+		beq $t0, 20, erase_monster		# if monsterCounter == 20, erase monster
+		beq $t0, 0, new_monster			# if monsterCounter == 0, generate new monster
+		j draw_monster
+		
+		new_monster:
+			jal generateMonsterX			# generate a new X val for the new monster
+			addi $t0, $v0, 0x10008500		# add monster X to the 10th row
+			sw $t0, monsterLoc				# store the new monster location
+			
+			j draw_monster					# draw the monster at the updated location
+		
+		draw_monster:
+			lw $a0, monsterLoc				# store monster location into $a0
+			lw $a1, monsterColor			# store monster color into $a1
+			jal drawCharacter				# draw monster
+			
+			j finish_monster_updates		# clean up
+		
+		erase_monster:
+			lw  $a0, monsterLoc				# load monsterLoc into $t1
+			lw  $a1, skyColor				# load bgColor into $a1
+			jal drawCharacter				# earse monster
+			li	$t3, -1						# store -1 into $t3
+			sw  $t3, monsterCounter			# store $t3 (0) into monsterCounter, reset counter
+			
+		finish_monster_updates:			
+			lw $t0, monsterCounter			# load monsterCounter into $t0
+			addi $t0, $t0, 1				# increment $t0
+			sw $t0, monsterCounter			# store $t0 into monsterCounter, i.e increment monsterCounter
+			
+		# erase WOW
+		addi $a0, $s0, 3132
+		lw $a1, skyColor
+		jal printWow
+		
+		# display score
 		lw $t0, score					# load score into $t0
 		li $t1, 10
 		div $t0, $t1					# calculate score / 10
-		mfhi $t0						# store second digit of score's decimal representation into $t0
-		mflo $t1						# store first digit of score's d ecimal representation into $t1
+		mfhi $t0						# store 1st digit of score's decimal representation into $t0
+		mflo $t1						# store 2nd digit of score's decimal representation into $t1
 		beq $t1, 0, single_digit_score	# if only single digit, jump to single_digit_score
+		
+		# double digit, if first digit is 0, show wow
+		bne $t0, 0, do_not_show_wow
+		addi $a0, $s0, 3132
+		lw $a1, ggColor
+		jal printWow
+		do_not_show_wow:
 		
 		addi $a0, $s0, 132				# store left digit position into $a0
 		beq $t1, 1, print_one_left
@@ -154,9 +204,13 @@ INIT:
 		
 		finish_printing_score:
 		
-		# check for game over
+		# check for game over (char falls out of screen)
 		addi $t0, $s0, 4096
 		bge  $s1, $t0, gameOver
+		# check for game over (char hits monster)
+		lw 	 $t8, monsterColor
+		lw 	 $t7, 0($s1)
+		beq  $t7, $t8, gameOver
 		
 		# check if lowest platform (p0) is out of screen
 		ble $s4, $t0, lowest_plat_not_out
@@ -350,6 +404,16 @@ INIT:
 		mul $t0, $a0, 4					# multiply the random int by 4, new range: [8, 116]
 		add $v0, $t0, $zero				# save the prev result to $v0
 		jr $ra							# return
+	
+	generateMonsterX:
+		li $v0, 42						# service 42 for random int within range
+		li $a0, 0						# ID of the RNG
+		li $a1, 27						# range of RNG: [0, 26]
+		syscall
+		addi $a0, $a0, 3				# add random int by 3 (center of a block, new range: [3, 28])
+		mul $t0, $a0, 4					# multiply the random int by 4, new range: [8, 116]
+		add $v0, $t0, $zero				# save the prev result to $v0
+		jr $ra							# return
 		
 	# increment the score counter by 1
 	incrementScore:
@@ -368,6 +432,14 @@ INIT:
 		jal printLetterG
 		addi $a0, $s0, 1360				# set the position for the exclamation mark
 		jal printExclamationMark
+		
+		# play sound effect
+		li $a0, 50
+		li $a1, 400						# set sound duration as 0.4 secs
+		li $a2, 127						# piano
+		li $a3, 127						# volume 100/127
+		li $v0, 31						# Service 31 for playing music
+		syscall
 		
 		# press SPACE to restart game
 		listen_for_retry:
@@ -581,6 +653,37 @@ INIT:
 		sw $t0, 532($a0)
 		sw $t0, 536($a0)
 		jr $ra
+	
+	# print WOW in color $a1 at position $a0
+	printWow:
+		add $t0, $a1, $zero
+		# print w
+		sw $t0, 0($a0)
+		sw $t0, 128($a0)
+		sw $t0, 8($a0)
+		sw $t0, 136($a0)
+		sw $t0, 16($a0)
+		sw $t0, 144($a0)
+		sw $t0, 260($a0)
+		sw $t0, 268($a0)
+		# print o
+		addi $a0, $a0, 28
+		sw $t0,   0($a0)				
+		sw $t0, 124($a0)				
+		sw $t0, 132($a0)				
+		sw $t0, 256($a0)
+		# print w
+		addi $a0, $a0, 12
+		sw $t0, 0($a0)
+		sw $t0, 128($a0)
+		sw $t0, 8($a0)
+		sw $t0, 136($a0)
+		sw $t0, 16($a0)
+		sw $t0, 144($a0)
+		sw $t0, 260($a0)
+		sw $t0, 268($a0)
+		jr $ra				
+		
 		
 		
 Exit:
